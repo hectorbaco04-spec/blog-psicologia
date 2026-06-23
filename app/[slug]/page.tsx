@@ -2,20 +2,34 @@ import Link from "next/link";
 import { getPostData, getAllSlugs } from "@/lib/posts";
 import { notFound } from "next/navigation";
 
+type Params = Promise<{ slug: string }>;
+
 export async function generateStaticParams() {
-  const slugs = getAllSlugs();
-  return slugs;
+  try {
+    const slugs = getAllSlugs();
+    return slugs.length > 0 ? slugs : [];
+  } catch {
+    return [];
+  }
 }
 
-export async function generateMetadata({ params }: { params: { slug: string } }) {
-  const post = await getPostData(params.slug);
-  return {
-    title: post.title,
-    description: post.description,
-  };
+export async function generateMetadata(props: { params: Params }) {
+  const params = await props.params;
+  try {
+    const post = await getPostData(params.slug);
+    return {
+      title: post.title,
+      description: post.description,
+    };
+  } catch {
+    return {
+      title: "Artículo no encontrado",
+    };
+  }
 }
 
-export default async function Post({ params }: { params: { slug: string } }) {
+export default async function Post(props: { params: Params }) {
+  const params = await props.params;
   let post;
   try {
     post = await getPostData(params.slug);
